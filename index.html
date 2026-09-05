@@ -752,7 +752,7 @@
    ========================================================================= */
 // The backend serves at this origin per app.py (python app.py -> :8000).
 // Change this if the API is deployed elsewhere.
-const API_BASE = "http://localhost:8000";
+const API_BASE = window.location.origin;
 
 /* =========================================================================
    STATE

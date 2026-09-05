@@ -425,63 +425,155 @@ DATE_PATTERN = re.compile(
 def offline_extractor(pages):
     """
     Deterministic, offline, rule-based extraction from raw page text.
-    This is what powers the app when no AI provider key is configured
-    (including the demo and automated tests), so MedLens is fully
-    functional with zero external AI dependency.
 
-    Returns: {
-        "labs": [ {test_name, value, unit, ref_low, ref_high, ref_raw,
-                    page_number, source_text, confidence} ],
-        "report_date": str | None
-    }
+    Supports both:
+        Hemoglobin: 11.2 g/dL 12.0 - 16.0
+    and:
+        Hemoglobin: 11.2 g/dL
+        Reference Range: 12.0 - 16.0 g/dL
+
+    Reference ranges are ONLY taken from the report.
     """
+
     labs = []
     report_date = None
 
+    # Matches a reference-range line separately.
+    REFERENCE_LINE_PATTERN = re.compile(
+        r"^\s*(?:reference\s*range|ref(?:erence)?\.?)\s*:"
+        r"\s*(?P<range>\d+(?:\.\d+)?\s*[-–—]\s*\d+(?:\.\d+)?)"
+        r"(?:\s*[A-Za-z%/µμ\^\*0-9.]*)?\s*$",
+        re.IGNORECASE,
+    )
+
     for page in pages:
         text = page.get("text") or ""
+        page_number = page.get("page_number")
+
         if not report_date:
             m = DATE_PATTERN.search(text)
             if m:
                 report_date = m.group(1)
 
-        for line in text.splitlines():
-            line_stripped = line.strip()
-            if not line_stripped:
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+
+        for line_index, line_stripped in enumerate(lines):
+
+            # -----------------------------------------------------------
+            # Reference range line:
+            # Attach it to the immediately preceding lab result.
+            # -----------------------------------------------------------
+            ref_match = REFERENCE_LINE_PATTERN.match(line_stripped)
+
+            if ref_match:
+                if labs and labs[-1].get("page_number") == page_number:
+                    ref_raw = ref_match.group("range").strip()
+                    ref_low, ref_high = parse_reference_range(ref_raw)
+
+                    labs[-1]["ref_low"] = ref_low
+                    labs[-1]["ref_high"] = ref_high
+                    labs[-1]["ref_raw"] = ref_raw
+
+                    # Preserve both source lines as evidence.
+                    previous_source = labs[-1].get("source_text") or ""
+                    labs[-1]["source_text"] = (
+                        previous_source + "\n" + line_stripped
+                    ).strip()
+
+                # Never create a fake lab called "Reference Range".
                 continue
+
+            # -----------------------------------------------------------
+            # Ignore obvious metadata lines.
+            # -----------------------------------------------------------
+            if re.match(
+                r"^(date|patient\s*name|name|age|sex|gender|"
+                r"observations?|comments?|notes?)\s*:",
+                line_stripped,
+                re.IGNORECASE,
+            ):
+                continue
+
+            # -----------------------------------------------------------
+            # Normal lab line.
+            # -----------------------------------------------------------
             m = LAB_LINE_PATTERN.match(line_stripped)
+
             if not m:
                 continue
+
             name = m.group("name").strip()
+
             if len(name) < 2:
                 continue
+
+            # Prevent fake metadata/test names.
+            if re.match(
+                r"^(reference\s*range|date|patient\s*name|"
+                r"name|age|sex|gender)$",
+                name,
+                re.IGNORECASE,
+            ):
+                continue
+
             value_str = m.group("value")
             unit = (m.group("unit") or "").strip() or None
             ref_raw = (m.group("ref") or "").strip() or None
-            ref_low, ref_high = parse_reference_range(ref_raw) if ref_raw else (None, None)
+
+            ref_low, ref_high = (
+                parse_reference_range(ref_raw)
+                if ref_raw
+                else (None, None)
+            )
 
             try:
                 value = float(value_str)
-            except ValueError:
-                value = None
+            except (TypeError, ValueError):
+                continue
 
-            labs.append({
+            # -----------------------------------------------------------
+            # Build the lab record.
+            # -----------------------------------------------------------
+            lab = {
                 "test_name": name,
                 "value": value,
-                "raw_value": value_str,
                 "unit": unit,
                 "ref_low": ref_low,
                 "ref_high": ref_high,
                 "ref_raw": ref_raw,
-                "page_number": page["page_number"],
+                "page_number": page_number,
                 "source_text": line_stripped,
-                # Deterministic parser: confidence reflects parse certainty,
-                # not medical judgment. Full range parsed -> higher confidence.
-                "confidence": 0.9 if (ref_low is not None and ref_high is not None) else 0.6,
-            })
+                "confidence": 0.95,
+            }
 
-    return {"labs": labs, "report_date": report_date}
+            labs.append(lab)
 
+    # ---------------------------------------------------------------
+    # Deduplicate identical extracted labs.
+    # ---------------------------------------------------------------
+    unique_labs = []
+    seen = set()
+
+    for lab in labs:
+        key = (
+            lab.get("test_name", "").strip().lower(),
+            lab.get("value"),
+            lab.get("unit"),
+            lab.get("ref_low"),
+            lab.get("ref_high"),
+            lab.get("page_number"),
+        )
+
+        if key in seen:
+            continue
+
+        seen.add(key)
+        unique_labs.append(lab)
+
+    return {
+        "labs": unique_labs,
+        "report_date": report_date,
+    }
 
 def call_ai_extractor(pages):
     """

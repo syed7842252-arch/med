@@ -1120,7 +1120,30 @@ def upload_report():
 
     doc = db.execute("SELECT * FROM documents WHERE id=?", (doc_id,)).fetchone()
     return jsonify(row_to_dict(doc)), 201
+@app.route("/api/patients/<pid>/reports", methods=["GET"])
+def get_patient_reports(pid):
+    db = get_db()
 
+    patient = db.execute(
+        "SELECT id FROM patients WHERE id=?",
+        (pid,)
+    ).fetchone()
+
+    if not patient:
+        return err("Patient not found", 404)
+
+    reports = rows_to_list(db.execute(
+        """
+        SELECT id, patient_id, filename, report_date, status,
+               error_message, uploaded_at
+        FROM documents
+        WHERE patient_id=?
+        ORDER BY uploaded_at DESC
+        """,
+        (pid,)
+    ).fetchall())
+
+    return jsonify(reports)
 
 @app.route("/api/reports/<doc_id>", methods=["GET"])
 def get_report(doc_id):

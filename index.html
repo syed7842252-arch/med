@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedLens — Evidence-First Clinical Information Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12181E;
+    --ink-soft:#232C36;
+    --paper:#FAF9F5;
+    --panel:#FFFFFF;
+    --line:#E3E1D9;
+    --line-strong:#CBC8BC;
+    --text:#1B211F;
+    --muted:#5C6560;
+    --muted-2:#8B948E;
+    --teal:#0E7A78;
+    --teal-deep:#0A5957;
+    --teal-tint:#E4F2F1;
+    --amber:#B4590A;
+    --amber-tint:#FBF0E4;
+    --red:#B4291D;
+    --red-tint:#FBEAE8;
+    --green:#146B37;
+    --green-tint:#E8F3EB;
+    --slate:#3E5C8A;
+    --slate-tint:#EAF0F8;
+    --radius-sm:3px;
+    --serif:'Source Serif 4', Georgia, serif;
+    --sans:'IBM Plex Sans', -apple-system, Segoe UI, Roboto, sans-serif;
+    --mono:'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{font-family:var(--serif); font-weight:600; margin:0; color:var(--ink);}
+  p{margin:0;}
+  button{font-family:var(--sans); cursor:pointer;}
+  input,select,textarea{font-family:var(--sans);}
+  a{color:var(--teal-deep);}
+
+  :focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  /* ---------- App shell ---------- */
+  .app{
+    display:grid;
+    grid-template-columns:236px 1fr;
+    min-height:100vh;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    background:var(--ink);
+    color:#E7E9E4;
+    padding:28px 0 20px;
+    position:sticky;
+    top:0;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  .brand{
+    padding:0 24px 22px;
+    border-bottom:1px solid rgba(255,255,255,0.09);
+    margin-bottom:14px;
+  }
+  .brand-mark{
+    font-family:var(--serif);
+    font-size:23px;
+    font-weight:600;
+    letter-spacing:0.2px;
+    color:#fff;
+    display:flex;
+    align-items:baseline;
+    gap:2px;
+  }
+  .brand-mark .dot{color:var(--teal); font-size:23px; line-height:1;}
+  .brand-tag{
+    font-size:11.5px;
+    color:#9AA39C;
+    margin-top:6px;
+    line-height:1.4;
+    max-width:170px;
+  }
+  nav.mainnav{flex:1; overflow-y:auto; padding:4px 0;}
+  .mainnav button{
+    display:flex;
+    width:100%;
+    align-items:center;
+    gap:10px;
+    background:none;
+    border:none;
+    color:#C4CBC3;
+    text-align:left;
+    font-size:13.5px;
+    padding:9px 24px;
+    border-left:3px solid transparent;
+    transition:none;
+  }
+  .mainnav button:hover{color:#fff; background:rgba(255,255,255,0.04);}
+  .mainnav button.active{
+    color:#fff;
+    background:rgba(14,122,120,0.16);
+    border-left-color:var(--teal);
+    font-weight:500;
+  }
+  .nav-group-label{
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    color:#6B746C;
+    padding:16px 24px 6px;
+  }
+  .sidebar-foot{
+    padding:14px 24px 0;
+    border-top:1px solid rgba(255,255,255,0.09);
+    font-size:11.5px;
+    color:#77817A;
+    line-height:1.5;
+  }
+  .patient-chip{
+    margin:0 24px 14px;
+    padding:10px 12px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:var(--radius-sm);
+  }
+  .patient-chip .label{font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:#8B948E;}
+  .patient-chip .name{font-family:var(--serif); font-size:15px; color:#fff; margin-top:3px;}
+  .patient-chip .meta{font-size:11.5px; color:#9AA39C; margin-top:2px; font-family:var(--mono);}
+  .patient-chip .empty{font-size:12.5px; color:#8B948E; font-style:italic;}
+
+  /* ---------- Main column ---------- */
+  main.content{padding:0; min-width:0;}
+  .topbar{
+    position:sticky; top:0; z-index:5;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+    padding:14px 36px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .topbar h2{font-size:19px;}
+  .topbar-sub{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .topbar-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+
+  .view{display:none; padding:32px 36px 64px; max-width:1080px;}
+  .view.active{display:block;}
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    border:1px solid var(--line-strong);
+    background:var(--panel);
+    color:var(--text);
+    padding:8px 16px;
+    border-radius:var(--radius-sm);
+    font-size:13px;
+    font-weight:500;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .btn:hover{border-color:var(--ink); background:var(--sand,#F4F2EC);}
+  .btn-primary{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .btn-primary:hover{background:var(--teal-deep); border-color:var(--teal-deep);}
+  .btn-quiet{border-color:transparent; background:none; color:var(--teal-deep); padding:8px 6px;}
+  .btn-quiet:hover{text-decoration:underline; background:none;}
+  .btn-danger{color:var(--red);}
+  .btn-danger:hover{border-color:var(--red); background:var(--red-tint);}
+  .btn-sm{padding:5px 10px; font-size:12px;}
+  .btn:disabled{opacity:0.45; cursor:not-allowed;}
+  .btn:disabled:hover{border-color:var(--line-strong); background:var(--panel);}
+
+  /* ---------- Dashboard ---------- */
+  .hero{
+    padding:8px 0 30px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:30px;
+  }
+  .hero-eyebrow{
+    font-size:13px; color:var(--teal-deep); font-weight:600;
+  }
+  .hero h1{font-size:38px; line-height:1.12; margin-top:10px; max-width:640px;}
+  .hero-desc{font-size:15.5px; color:var(--muted); max-width:560px; margin-top:14px; line-height:1.6;}
+  .hero-principle{
+    font-family:var(--mono); font-size:12.5px; color:var(--teal-deep);
+    margin-top:16px; padding:9px 12px; background:var(--teal-tint);
+    display:inline-block; border-radius:var(--radius-sm);
+  }
+  .hero-actions{display:flex; gap:10px; margin-top:24px; flex-wrap:wrap;}
+
+  .cap-list{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0;
+    border-top:1px solid var(--line);
+  }
+  .cap-item{
+    padding:18px 22px 18px 16px;
+    border-bottom:1px solid var(--line);
+    border-left:3px solid transparent;
+  }
+  .cap-item:nth-child(odd){border-right:1px solid var(--line);}
+  .cap-item h4{font-size:15px; margin-bottom:6px;}
+  .cap-item p{font-size:13px; color:var(--muted); line-height:1.55;}
+  .cap-item.t-user{border-left-color:var(--slate);}
+  .cap-item.t-report{border-left-color:var(--teal);}
+  .cap-item.t-ai{border-left-color:var(--amber);}
+  .cap-item.t-rule{border-left-color:var(--ink);}
+  @media (max-width:640px){
+    .cap-list{grid-template-columns:1fr;}
+    .cap-item:nth-child(odd){border-right:none;}
+  }
+
+  .section-heading{margin-bottom:18px;}
+  .section-heading h3{font-size:15px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted);}
+
+  /* ---------- Cards / panels ---------- */
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius-sm);
+    padding:20px 22px;
+    margin-bottom:18px;
+  }
+  .panel + .panel{margin-top:0;}
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media (max-width:760px){.grid-2{grid-template-columns:1fr;}}
+
+  .field{margin-bottom:16px;}
+  .field label{display:block; font-size:12.5px; font-weight:600; color:var(--ink); margin-bottom:5px;}
+  .field .hint{font-size:11.5px; color:var(--muted-2); margin-top:4px;}
+  .field input[type=text], .field input[type=number], .field select, .field textarea{
+    width:100%; padding:9px 11px; border:1px solid var(--line-strong); border-radius:var(--radius-sm);
+    font-size:13.5px; background:#fff; color:var(--text);
+  }
+  .field textarea{resize:vertical; min-height:60px;}
+  .tag-input-row{display:flex; gap:8px;}
+  .tag-input-row input{flex:1;}
+  .tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px;}
+  .tag{
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--slate-tint); color:var(--slate);
+    border:1px solid #D3DEEC; padding:4px 6px 4px 10px;
+    border-radius:12px; font-size:12.5px;
+  }
+  .tag button{background:none; border:none; color:var(--slate); font-size:14px; line-height:1; padding:0 3px;}
+  .tag.allergy{background:var(--red-tint); color:var(--red); border-color:#F1CFC9;}
+  .tag.allergy button{color:var(--red);}
+
+  form .btn-primary{margin-top:6px;}
+
+  /* ---------- Status / provenance badges ---------- */
+  .badge{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:11px; font-weight:600; letter-spacing:0.02em;
+    padding:3px 8px; border-radius:10px; white-space:nowrap;
+  }
+  .badge-low{background:var(--amber-tint); color:var(--amber);}
+  .badge-high{background:var(--red-tint); color:var(--red);}
+  .badge-normal{background:var(--green-tint); color:var(--green);}
+  .badge-notclassified{background:#EEEDE7; color:var(--muted);}
+  .badge-verified{background:var(--green-tint); color:var(--green);}
+  .badge-unverified{background:#EEEDE7; color:var(--muted);}
+  .badge-rejected{background:var(--red-tint); color:var(--red); text-decoration:line-through;}
+  .badge-conflict{background:var(--red-tint); color:var(--red);}
+
+  .prov{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11px; font-weight:500; color:var(--muted);
+  }
+  .prov::before{content:''; width:7px; height:7px; border-radius:50%; display:inline-block;}
+  .prov.user::before{background:var(--slate);}
+  .prov.report::before{background:var(--teal);}
+  .prov.ai::before{background:var(--amber);}
+  .prov.conflict::before{background:var(--red);}
+
+  /* fact / lab strip cards, sharing the sidebar's left-border-as-status language */
+  .fact-row{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+    padding:12px 14px; border:1px solid var(--line); border-left:3px solid var(--slate);
+    border-radius:var(--radius-sm); margin-bottom:8px; background:#fff;
+  }
+  .fact-row.origin-report_extracted{border-left-color:var(--teal);}
+  .fact-row.origin-ai_generated{border-left-color:var(--amber);}
+  .fact-row.origin-user_provided{border-left-color:var(--slate);}
+  .fact-main .fact-value{font-size:14.5px; font-weight:500;}
+  .fact-main .fact-value.rejected{text-decoration:line-through; color:var(--muted-2);}
+  .fact-meta{display:flex; gap:10px; align-items:center; margin-top:5px; flex-wrap:wrap;}
+  .fact-actions{display:flex; gap:6px; flex-shrink:0;}
+
+  .edit-inline{margin-top:10px; padding-top:10px; border-top:1px dashed var(--line-strong); display:none;}
+  .edit-inline.open{display:block;}
+  .edit-inline .row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;}
+  .edit-inline input{padding:6px 8px; border:1px solid var(--line-strong); border-radius:var(--radius-sm); font-size:13px; width:120px;}
+
+  /* ---------- Tables ---------- */
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  thead th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--muted); font-weight:600; padding:9px 12px; border-bottom:1px solid var(--line-strong);
+    white-space:nowrap;
+  }
+  tbody td{padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tbody tr:hover{background:#F7F6F1;}
+  tbody tr.selected{background:var(--teal-tint);}
+  .num{font-family:var(--mono);}
+  .row-link{background:none; border:none; color:var(--teal-deep); font-weight:500; text-decoration:underline; padding:0; font-size:13.5px;}
+
+  /* ---------- Empty / loading / error states ---------- */
+  .state-block{
+    padding:34px 20px; text-align:center; border:1px dashed var(--line-strong);
+    border-radius:var(--radius-sm); color:var(--muted);
+  }
+  .state-block h4{font-size:14.5px; color:var(--ink); margin-bottom:6px;}
+  .state-block p{font-size:13px; max-width:380px; margin:0 auto;}
+  .state-block.error{border-color:#E3B7AF; background:var(--red-tint); color:var(--red);}
+  .state-block.error h4{color:var(--red);}
+  .spinner{
+    width:16px; height:16px; border-radius:50%;
+    border:2px solid var(--line-strong); border-top-color:var(--teal);
+    animation:spin 0.7s linear infinite; display:inline-block; vertical-align:-3px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .inline-loading{font-size:13px; color:var(--muted); display:flex; align-items:center; gap:8px; padding:14px 0;}
+
+  /* ---------- Reports ---------- */
+  .upload-box{
+    border:1.5px dashed var(--line-strong); border-radius:var(--radius-sm);
+    padding:26px; text-align:center; background:#fff; margin-bottom:20px;
+  }
+  .upload-box.drag{border-color:var(--teal); background:var(--teal-tint);}
+  .upload-box p{font-size:13.5px; color:var(--muted); margin-top:6px;}
+  .doc-row{
+    display:flex; justify-content:space-between; align-items:center; gap:14px;
+    padding:14px 16px; border:1px solid var(--line); border-radius:var(--radius-sm); margin-bottom:10px; background:#fff;
+  }
+  .doc-info .fname{font-weight:600; font-size:14px;}
+  .doc-info .fmeta{font-size:12px; color:var(--muted); margin-top:3px; font-family:var(--mono);}
+
+  /* ---------- Evidence panel ---------- */
+  .ev-card{
+    border:1px solid var(--line); border-radius:var(--radius-sm); padding:18px 20px; margin-bottom:14px; background:#fff;
+  }
+  .ev-source{
+    font-family:var(--mono); font-size:13px; background:var(--ink); color:#EDEBE3;
+    padding:12px 14px; border-radius:var(--radius-sm); margin:12px 0; line-height:1.6;
+  }
+  .ev-meta-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-top:10px;}
+  .ev-meta-grid div .k{font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted-2);}
+  .ev-meta-grid div .v{font-size:13.5px; margin-top:2px; font-weight:500;}
+
+  /* ---------- Conflicts ---------- */
+  .conflict-card{border:1px solid var(--line); border-left:3px solid var(--red); border-radius:var(--radius-sm); padding:18px 20px; margin-bottom:16px; background:#fff;}
+  .conflict-compare{display:grid; grid-template-columns:1fr auto 1fr; gap:14px; align-items:center; margin:14px 0;}
+  .conflict-side{border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 14px;}
+  .conflict-side .k{font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted-2);}
+  .conflict-side .v{font-size:15px; font-weight:600; margin-top:4px;}
+  .conflict-vs{font-size:12px; color:var(--muted-2); font-family:var(--mono);}
+  .conflict-side.current{border-left:3px solid var(--teal);}
+  .conflict-side.previous{border-left:3px solid var(--muted-2);}
+
+  /* ---------- Timeline ---------- */
+  .tl-list{border-left:2px solid var(--line); margin-left:8px; padding-left:24px;}
+  .tl-event{position:relative; padding-bottom:22px;}
+  .tl-event::before{
+    content:''; position:absolute; left:-29px; top:4px; width:9px; height:9px; border-radius:50%;
+    background:var(--teal); border:2px solid var(--paper);
+  }
+  .tl-event.type-conflict::before{background:var(--red);}
+  .tl-event.type-verification::before{background:var(--slate);}
+  .tl-event.type-report_uploaded::before{background:var(--ink);}
+  .tl-date{font-family:var(--mono); font-size:11.5px; color:var(--muted-2);}
+  .tl-title{font-size:14.5px; font-weight:500; margin-top:3px;}
+  .tl-detail{font-size:12.5px; color:var(--muted); margin-top:4px;}
+
+  /* ---------- Summary ---------- */
+  .summary-box{
+    border:1px solid var(--line); border-radius:var(--radius-sm); padding:24px 26px; background:#fff;
+  }
+  .summary-text{font-family:var(--serif); font-size:16.5px; line-height:1.75; color:var(--text); max-width:640px;}
+  .disclaimer{
+    margin-top:18px; padding:12px 14px; background:var(--amber-tint); border:1px solid #EAD3B2;
+    border-radius:var(--radius-sm); font-size:12.5px; color:var(--amber); line-height:1.55;
+  }
+  .summary-meta{margin-top:14px; font-size:11.5px; color:var(--muted-2); font-family:var(--mono);}
+
+  /* ---------- Toast ---------- */
+  #toast{
+    position:fixed; bottom:22px; right:22px; z-index:50;
+    display:flex; flex-direction:column; gap:8px; max-width:320px;
+  }
+  .toast-item{
+    background:var(--ink); color:#fff; padding:11px 15px; border-radius:var(--radius-sm);
+    font-size:13px; box-shadow:0 4px 18px rgba(0,0,0,0.18); border-left:3px solid var(--teal);
+  }
+  .toast-item.err{border-left-color:var(--red);}
+
+  .muted{color:var(--muted);}
+  .mono{font-family:var(--mono);}
+  .req-star{color:var(--red);}
+
+  @media (max-width:860px){
+    .app{grid-template-columns:1fr;}
+    .sidebar{position:relative; height:auto; padding-bottom:10px;}
+    nav.mainnav{display:flex; flex-wrap:wrap; overflow:visible;}
+    .mainnav button{width:auto; border-left:none; border-bottom:3px solid transparent; padding:8px 14px;}
+    .mainnav button.active{border-left:none; border-bottom-color:var(--teal);}
+    .view{padding:24px 18px 48px;}
+    .topbar{padding:14px 18px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">MedLens<span class="dot">.</span></div>
+      <div class="brand-tag">Evidence-first clinical information intelligence</div>
+    </div>
+
+    <div class="patient-chip" id="patientChip">
+      <div class="label">Active patient</div>
+      <div class="empty" id="patientChipBody">None selected</div>
+    </div>
+
+    <nav class="mainnav" id="mainNav">
+      <div class="nav-group-label">Overview</div>
+      <button data-view="dashboard" class="active">Dashboard</button>
+
+      <div class="nav-group-label">Intake</div>
+      <button data-view="patient-info">Patient Information</button>
+      <button data-view="reports">Reports</button>
+
+      <div class="nav-group-label">Record</div>
+      <button data-view="record">Structured Record</button>
+      <button data-view="labs">Lab Intelligence</button>
+      <button data-view="evidence">Evidence</button>
+      <button data-view="conflicts">Conflicts</button>
+      <button data-view="timeline">Timeline</button>
+
+      <div class="nav-group-label">Review</div>
+      <button data-view="summary">AI Summary</button>
+    </nav>
+
+    <div class="sidebar-foot">
+      API extracts. Rules validate.<br>Evidence explains. Humans verify.
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <h2 id="topbarTitle">Dashboard</h2>
+        <div class="topbar-sub" id="topbarSub">Evidence-first review, organized for human judgment.</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn" id="btnRefreshAll" title="Reload current view from the API">Refresh</button>
+        <button class="btn btn-primary" id="btnTryDemoTop">Try Demo Patient</button>
+      </div>
+    </div>
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <section class="view active" id="view-dashboard">
+      <div class="hero">
+        <div class="hero-eyebrow">Clinical information intelligence — not a diagnosis tool</div>
+        <h1>Every fact in the record, traced back to where it came from.</h1>
+        <p class="hero-desc">MedLens extracts patient information and lab results from medical reports, structures them,
+          and shows exactly why each value looks the way it does — so a clinician can verify, not guess.</p>
+        <div class="hero-principle">AI extracts → Rules validate → Evidence explains → Humans verify</div>
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="btnTryDemo">Try Demo Patient</button>
+          <button class="btn" id="btnGoUpload">Upload Medical Report</button>
+          <button class="btn" id="btnGoIntake">Enter Patient Information</button>
+        </div>
+      </div>
+
+      <div class="section-heading"><h3>What it does</h3></div>
+      <div class="cap-list">
+        <div class="cap-item t-rule">
+          <h4>Structured Extraction</h4>
+          <p>Pulls patient details and lab values out of uploaded reports into one consistent record instead of loose PDF pages.</p>
+        </div>
+        <div class="cap-item t-user">
+          <h4>Evidence &amp; Provenance</h4>
+          <p>Every fact is tagged with where it came from — typed in by a person, pulled from a report, or produced by the model.</p>
+        </div>
+        <div class="cap-item t-report">
+          <h4>Lab Intelligence</h4>
+          <p>Values are checked against the reference range printed on the report itself — never an assumed medical norm.</p>
+        </div>
+        <div class="cap-item t-ai">
+          <h4>Conflict Detection</h4>
+          <p>Contradictions between current and past records — like a new allergy versus "no known allergies" — are flagged, never silently resolved.</p>
+        </div>
+        <div class="cap-item t-user">
+          <h4>Human Verification</h4>
+          <p>Every extracted fact and lab result can be verified, edited, or rejected, with the change kept on record.</p>
+        </div>
+        <div class="cap-item t-report">
+          <h4>Timeline Comparison</h4>
+          <p>Current and previous values sit side by side, in order, so a change is easy to see and never overstated.</p>
+        </div>
+        <div class="cap-item t-rule">
+          <h4>Safe AI Summary</h4>
+          <p>A plain-language summary built from the structured record — not the raw PDF — with no diagnosis or treatment advice.</p>
+        </div>
+        <div class="cap-item t-ai">
+          <h4>Deterministic Classification</h4>
+          <p>LOW / NORMAL / HIGH is decided by simple comparison against the source range. If no valid range exists, it says so.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== PATIENT INFORMATION ===================== -->
+    <section class="view" id="view-patient-info">
+      <div class="panel">
+        <div class="section-heading"><h3>Patient intake</h3></div>
+        <form id="patientForm">
+          <div class="grid-2">
+            <div class="field">
+              <label for="fName">Patient name</label>
+              <input type="text" id="fName" placeholder="e.g. Asha Rao">
+              <div class="hint">Kept in this browser only — MedLens' record itself is de-identified by age and sex.</div>
+            </div>
+            <div class="grid-2" style="gap:16px;">
+              <div class="field">
+                <label for="fAge">Age</label>
+                <input type="number" id="fAge" min="0" max="130" placeholder="e.g. 41">
+              </div>
+              <div class="field">
+                <label for="fSex">Sex</label>
+                <select id="fSex">
+                  <option value="">Select…</option>
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                  <option value="other">Other</option>
+                  <option value="unspecified">Prefer not to say</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="fSymptomInput">Symptoms</label>
+              <div class="tag-input-row">
+                <input type="text" id="fSymptomInput" placeholder="Type a symptom, press Enter">
+                <button type="button" class="btn btn-sm" data-add="symptoms">Add</button>
+              </div>
+              <div class="tags" id="tagsSymptoms"></div>
+            </div>
+            <div class="field">
+              <label for="fConditionInput">Conditions</label>
+              <div class="tag-input-row">
+                <input type="text" id="fConditionInput" placeholder="Type a condition, press Enter">
+                <button type="button" class="btn btn-sm" data-add="conditions">Add</button>
+              </div>
+              <div class="tags" id="tagsConditions"></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="fAllergyInput">Allergies</label>
+              <div class="tag-input-row">
+                <input type="text" id="fAllergyInput" placeholder="Type an allergy, press Enter">
+                <button type="button" class="btn btn-sm" data-add="allergies">Add</button>
+              </div>
+              <div class="tags" id="tagsAllergies"></div>
+              <div class="hint">Entering an allergy that contradicts the existing record raises a conflict automatically.</div>
+            </div>
+            <div class="field">
+              <label for="fMedicationInput">Medications</label>
+              <div class="tag-input-row">
+                <input type="text" id="fMedicationInput" placeholder="Type a medication, press Enter">
+                <button type="button" class="btn btn-sm" data-add="medications">Add</button>
+              </div>
+              <div class="tags" id="tagsMedications"></div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="btnSavePatient">Create patient record</button>
+          <span class="inline-loading" id="patientFormStatus" style="display:none;"></span>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===================== REPORTS ===================== -->
+    <section class="view" id="view-reports">
+      <div id="reportsNoPatient" class="state-block">
+        <h4>No patient selected</h4>
+        <p>Create or select a patient in Patient Information before uploading a report.</p>
+      </div>
+
+      <div id="reportsBody" style="display:none;">
+        <div class="upload-box" id="uploadBox">
+          <div style="font-weight:600; font-size:14.5px;">Upload a medical report (PDF)</div>
+          <p>Drop a file here, or choose one below. MedLens will extract lab values and preserve every reference range exactly as printed.</p>
+          <div style="margin-top:14px;">
+            <input type="file" id="fileInput" accept="application/pdf" style="display:none;">
+            <button class="btn btn-primary" id="btnChooseFile">Choose PDF</button>
+          </div>
+          <div id="uploadStatus" class="inline-loading" style="display:none; justify-content:center;"></div>
+        </div>
+
+        <div class="section-heading"><h3>Uploaded reports</h3></div>
+        <div id="docList"></div>
+      </div>
+    </section>
+
+    <!-- ===================== STRUCTURED RECORD ===================== -->
+    <section class="view" id="view-record">
+      <div id="recordEmpty" class="state-block">
+        <h4>No patient selected</h4>
+        <p>Select or create a patient to see their structured record.</p>
+      </div>
+      <div id="recordBody" style="display:none;">
+        <div class="panel" id="recordPatientPanel"></div>
+
+        <div class="section-heading"><h3>Symptoms</h3></div>
+        <div id="recordSymptoms"></div>
+
+        <div class="section-heading"><h3>Conditions</h3></div>
+        <div id="recordConditions"></div>
+
+        <div class="section-heading"><h3>Allergies</h3></div>
+        <div id="recordAllergies"></div>
+
+        <div class="section-heading"><h3>Medications</h3></div>
+        <div id="recordMedications"></div>
+
+        <div class="section-heading"><h3>Laboratory results</h3></div>
+        <div id="recordLabsMini"></div>
+
+        <div class="section-heading"><h3>Reports on file</h3></div>
+        <div id="recordDocs"></div>
+      </div>
+    </section>
+
+    <!-- ===================== LAB INTELLIGENCE ===================== -->
+    <section class="view" id="view-labs">
+      <div id="labsEmpty" class="state-block">
+        <h4>No patient selected</h4>
+        <p>Select or create a patient, then upload and extract a report to see lab results here.</p>
+      </div>
+      <div id="labsBody" style="display:none;">
+        <div class="panel" style="padding:0; overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Test</th><th>Value</th><th>Unit</th><th>Reference range</th>
+                <th>Status</th><th>Date</th><th>Verification</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="labsTableBody"></tbody>
+          </table>
+        </div>
+        <div id="labsEditArea"></div>
+      </div>
+    </section>
+
+    <!-- ===================== EVIDENCE ===================== -->
+    <section class="view" id="view-evidence">
+      <div id="evidenceEmpty" class="state-block">
+        <h4>No patient selected</h4>
+        <p>Select or create a patient to see the evidence behind each extracted fact.</p>
+      </div>
+      <div id="evidenceBody" style="display:none;">
+        <div class="section-heading">
+          <h3>Why each fact looks the way it does</h3>
+        </div>
+        <div id="evidenceList"></div>
+      </div>
+    </section>
+
+    <!-- ===================== CONFLICTS ===================== -->
+    <section class="view" id="view-conflicts">
+      <div id="conflictsEmpty" class="state-block">
+        <h4>No patient selected</h4>
+        <p>Select or create a patient to see the conflict radar.</p>
+      </div>
+      <div id="conflictsBody" style="display:none;">
+        <div class="section-heading"><h3>Conflict radar</h3></div>
+        <div id="conflictsList"></div>
+      </div>
+    </section>
+
+    <!-- ===================== TIMELINE ===================== -->
+    <section class="view" id="view-timeline">
+      <div id="timelineEmpty" class="state-block">
+        <h4>No patient selected</h4>
+        <p>Select or create a patient to see their timeline.</p>
+      </div>
+      <div id="timelineBody" style="display:none;">
+        <div class="section-heading"><h3>Patient timeline</h3></div>
+        <div class="tl-list" id="timelineList"></div>
+      </div>
+    </section>
+
+    <!-- ===================== AI SUMMARY ===================== -->
+    <section class="view" id="view-summary">
+      <div id="summaryEmpty" class="state-block">
+        <h4>No patient selected</h4>
+        <p>Select or create a patient to generate a summary.</p>
+      </div>
+      <div id="summaryBody" style="display:none;">
+        <div class="section-heading"><h3>AI-generated summary</h3></div>
+        <button class="btn btn-primary" id="btnGenSummary" style="margin-bottom:16px;">Generate summary</button>
+        <div class="summary-box" id="summaryBox">
+          <div class="state-block">
+            <h4>No summary yet</h4>
+            <p>Generate a summary from the current structured record.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================================
+   CONFIG
+   ========================================================================= */
+// The backend serves at this origin per app.py (python app.py -> :8000).
+// Change this if the API is deployed elsewhere.
+const API_BASE = "http://localhost:8000";
+
+/* =========================================================================
+   STATE
+   ========================================================================= */
+const state = {
+  patientId: localStorage.getItem("medlens_patient_id") || null,
+  patientName: localStorage.getItem("medlens_patient_name") || null,
+  draft: { symptoms: [], conditions: [], allergies: [], medications: [] },
+  record: null,
+  labs: null,
+  evidence: null,
+  conflicts: null,
+  timeline: null,
+  focusSubjectId: null // when arriving at Evidence from a specific lab/fact
+};
+
+/* =========================================================================
+   API HELPER
+   ========================================================================= */
+async function api(path, options){
+  options = options || {};
+  let res;
+  try{
+    res = await fetch(API_BASE + path, options);
+  }catch(e){
+    throw new Error("Could not reach the MedLens API at " + API_BASE + ". Is the backend running?");
+  }
+  let body = null;
+  try{ body = await res.json(); }catch(e){ /* no JSON body */ }
+  if(!res.ok){
+    const msg = (body && body.error) ? body.error : ("Request failed (" + res.status + ")");
+    throw new Error(msg);
+  }
+  return body;
+}
+
+function apiForm(path, formData){
+  return fetch(API_BASE + path, { method:"POST", body: formData }).then(async (res)=>{
+    let body = null;
+    try{ body = await res.json(); }catch(e){}
+    if(!res.ok){
+      const msg = (body && body.error) ? body.error : ("Upload failed (" + res.status + ")");
+      throw new Error(msg);
+    }
+    return body;
+  });
+}
+
+/* =========================================================================
+   TOAST
+   ========================================================================= */
+function toast(message, isErr){
+  const wrap = document.getElementById("toast");
+  const el = document.createElement("div");
+  el.className = "toast-item" + (isErr ? " err" : "");
+  el.textContent = message;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.remove(); }, 4200);
+}
+
+/* =========================================================================
+   SMALL DOM HELPERS
+   ========================================================================= */
+function h(tag, attrs, children){
+  const el = document.createElement(tag);
+  attrs = attrs || {};
+  Object.keys(attrs).forEach(k=>{
+    if(k === "class") el.className = attrs[k];
+    else if(k === "html") el.innerHTML = attrs[k];
+    else if(k.startsWith("on") && typeof attrs[k] === "function") el.addEventListener(k.slice(2), attrs[k]);
+    else el.setAttribute(k, attrs[k]);
+  });
+  (children||[]).forEach(c=>{
+    if(c === null || c === undefined) return;
+    if(typeof c === "string") el.appendChild(document.createTextNode(c));
+    else el.appendChild(c);
+  });
+  return el;
+}
+function esc(v){
+  if(v === null || v === undefined) return "";
+  return String(v);
+}
+function fmtDate(iso){
+  if(!iso) return "—";
+  // Handles both plain YYYY-MM-DD and full ISO timestamps.
+  const d = new Date(iso.length <= 10 ? iso + "T00:00:00" : iso);
+  if(isNaN(d.getTime())) return esc(iso);
+  return d.toLocaleDateString(undefined, { year:"numeric", month:"short", day:"numeric" });
+}
+function fmtDateTime(iso){
+  if(!iso) return "—";
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return esc(iso);
+  return d.toLocaleString(undefined, { year:"numeric", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
+}
+
+/* =========================================================================
+   PROVENANCE / STATUS BADGES
+   ========================================================================= */
+function originLabel(origin){
+  const map = {
+    USER_PROVIDED: "User provided",
+    REPORT_EXTRACTED: "Report extracted",
+    AI_GENERATED: "AI generated",
+    CONFLICT: "Conflict",
+    UNVERIFIED: "Unverified",
+    VERIFIED: "Verified"
+  };
+  return map[origin] || origin || "Unknown";
+}
+function originDot(origin){
+  const cls = (origin || "").toLowerCase();
+  return h("span", { class: "prov " + (cls === "report_extracted" ? "report" : cls === "ai_generated" ? "ai" : cls === "conflict" ? "conflict" : "user") },
+    [originLabel(origin)]);
+}
+function classificationBadge(cls){
+  const map = {
+    LOW: ["badge-low","LOW"], HIGH: ["badge-high","HIGH"],
+    NORMAL: ["badge-normal","NORMAL"], NOT_CLASSIFIED: ["badge-notclassified","NOT CLASSIFIED"]
+  };
+  const m = map[cls] || map.NOT_CLASSIFIED;
+  return h("span", { class: "badge " + m[0] }, [m[1]]);
+}
+function verificationBadge(state_){
+  const map = {
+    VERIFIED: ["badge-verified","Verified"], UNVERIFIED: ["badge-unverified","Unverified"],
+    REJECTED: ["badge-rejected","Rejected"]
+  };
+  const m = map[state_] || map.UNVERIFIED;
+  return h("span", { class: "badge " + m[0] }, [m[1]]);
+}
+
+/* =========================================================================
+   VIEW ROUTER
+   ========================================================================= */
+const VIEW_TITLES = {
+  dashboard: ["Dashboard", "Evidence-first review, organized for human judgment."],
+  "patient-info": ["Patient Information", "Everything entered here is tracked as a user-provided fact."],
+  reports: ["Reports", "Upload a PDF and extract structured lab data from it."],
+  record: ["Structured Record", "The full patient record, assembled from intake and reports."],
+  labs: ["Lab Intelligence", "Values classified deterministically against the source reference range."],
+  evidence: ["Evidence", "Where every important fact came from, and how confident the extraction is."],
+  conflicts: ["Conflicts", "Contradictions between current and previous information, never auto-resolved."],
+  timeline: ["Timeline", "Patient and lab history in chronological order."],
+  summary: ["AI Summary", "A safe, patient-friendly summary generated from the structured record."]
+};
+
+function showView(name){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  const target = document.getElementById("view-" + name);
+  if(target) target.classList.add("active");
+  document.querySelectorAll(".mainnav button").forEach(b=>b.classList.toggle("active", b.dataset.view === name));
+  const meta = VIEW_TITLES[name] || [name, ""];
+  document.getElementById("topbarTitle").textContent = meta[0];
+  document.getElementById("topbarSub").textContent = meta[1];
+  refreshView(name);
+}
+
+document.getElementById("mainNav").addEventListener("click", (e)=>{
+  const btn = e.target.closest("button[data-view]");
+  if(!btn) return;
+  showView(btn.dataset.view);
+});
+document.getElementById("btnGoUpload").addEventListener("click", ()=>showView("reports"));
+document.getElementById("btnGoIntake").addEventListener("click", ()=>showView("patient-info"));
+document.getElementById("btnRefreshAll").addEventListener("click", ()=>{
+  const active = document.querySelector(".view.active");
+  if(active) refreshView(active.id.replace("view-",""));
+});
+
+function refreshView(name){
+  if(name === "patient-info") loadPatientIntoForm();
+  if(name === "reports") loadReports();
+  if(name === "record") loadRecord();
+  if(name === "labs") loadLabs();
+  if(name === "evidence") loadEvidence();
+  if(name === "conflicts") loadConflicts();
+  if(name === "timeline") loadTimeline();
+  if(name === "summary") loadSummaryView();
+}
+
+/* =========================================================================
+   PATIENT CHIP (sidebar)
+   ========================================================================= */
+function renderPatientChip(){
+  const body = document.getElementById("patientChipBody");
+  if(!state.patientId){
+    body.className = "empty";
+    body.textContent = "None selected";
+    return;
+  }
+  body.className = "";
+  body.innerHTML = "";
+  body.appendChild(h("div", { class: "name" }, [state.patientName || "Unnamed patient"]));
+  body.appendChild(h("div", { class: "meta" }, [state.patientId]));
+}
+
+function setActivePatient(id, name){
+  state.patientId = id;
+  state.patientName = name || state.patientName;
+  if(id){
+    localStorage.setItem("medlens_patient_id", id);
+    if(name) localStorage.setItem("medlens_patient_name", name);
+  }else{
+    localStorage.removeItem("medlens_patient_id");
+    localStorage.removeItem("medlens_patient_name");
+  }
+  renderPatientChip();
+}
+
+/* =========================================================================
+   DEMO PATIENT
+   ========================================================================= */
+async function tryDemoPatient(){
+  try{
+    toast("Building demo patient…");
+    const record = await api("/api/demo/patient");
+    setActivePatient(record.patient_id, "Demo Patient (synthetic)");
+    state.record = record;
+    toast("Demo patient ready.");
+    showView("record");
+  }catch(e){
+    toast(e.message, true);
+  }
+}
+document.getElementById("btnTryDemo").addEventListener("click", tryDemoPatient);
+document.getElementById("btnTryDemoTop").addEventListener("click", tryDemoPatient);
+
+/* =========================================================================
+   PATIENT INFORMATION FORM
+   ========================================================================= */
+const TAG_FIELDS = ["symptoms","conditions","allergies","medications"];
+
+// FIX: the previous version derived each input's DOM id by string-slicing
+// the field name (assuming plural == singular + "s"), e.g.
+//   "f" + field[0].toUpperCase() + field.slice(1,-1) + "Input"
+// That breaks for "allergies" (plural of "allergy", not "allergie"), which
+// produced "fAllergieInput" instead of the real id "fAllergyInput".
+// getElementById then returned null, and the very next line called
+// null.addEventListener(...), throwing an uncaught TypeError during page
+// load. Because this ran inside the single top-level IIFE, every listener
+// registered further down the script (the patient-form submit handler,
+// the file-upload handlers, and the "Generate summary" button) never got
+// attached — which is why creating a patient / uploading a report /
+// generating a summary silently did nothing.
+// Using an explicit id map avoids the fragile string-slicing entirely.
+const TAG_FIELD_INPUT_IDS = {
+  symptoms: "fSymptomInput",
+  conditions: "fConditionInput",
+  allergies: "fAllergyInput",
+  medications: "fMedicationInput"
+};
+
+function renderTags(field){
+  const wrap = document.getElementById("tags" + field[0].toUpperCase() + field.slice(1));
+  wrap.innerHTML = "";
+  state.draft[field].forEach((val, idx)=>{
+    const tagClass = field === "allergies" ? "tag allergy" : "tag";
+    wrap.appendChild(h("span", { class: tagClass }, [
+      val,
+      h("button", { type:"button", "aria-label":"Remove " + val, onclick: ()=>{
+        state.draft[field].splice(idx,1);
+        renderTags(field);
+      }}, ["×"])
+    ]));
+  });
+}
+function addTag(field, inputEl){
+  if(!inputEl) return;
+  const val = inputEl.value.trim();
+  if(!val) return;
+  if(!state.draft[field].includes(val)) state.draft[field].push(val);
+  inputEl.value = "";
+  renderTags(field);
+}
+document.querySelectorAll("[data-add]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const field = btn.dataset.add;
+    const input = document.getElementById(TAG_FIELD_INPUT_IDS[field]);
+    addTag(field, input);
+  });
+});
+TAG_FIELDS.forEach(field=>{
+  const input = document.getElementById(TAG_FIELD_INPUT_IDS[field]);
+  if(!input) return;
+  input.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){ e.preventDefault(); addTag(field, input); }
+  });
+});
+
+function loadPatientIntoForm(){
+  document.getElementById("fName").value = state.patientName && state.patientName !== "Demo Patient (synthetic)" ? state.patientName : (document.getElementById("fName").value || "");
+  const btn = document.getElementById("btnSavePatient");
+  btn.textContent = state.patientId ? "Save changes" : "Create patient record";
+
+  if(!state.patientId) return;
+  api("/api/patients/" + state.patientId).then(p=>{
+    document.getElementById("fAge").value = p.age ?? "";
+    document.getElementById("fSex").value = p.sex || "";
+    TAG_FIELDS.forEach(f=>{ state.draft[f] = (p[f] || []).slice(); renderTags(f); });
+  }).catch(e=>toast(e.message, true));
+}
+
+document.getElementById("patientForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const statusEl = document.getElementById("patientFormStatus");
+  statusEl.style.display = "flex";
+  statusEl.innerHTML = "";
+  statusEl.appendChild(h("span", { class:"spinner" }));
+  statusEl.appendChild(document.createTextNode(" Saving…"));
+
+  const payload = {
+    age: document.getElementById("fAge").value ? Number(document.getElementById("fAge").value) : null,
+    sex: document.getElementById("fSex").value || null,
+    symptoms: state.draft.symptoms,
+    conditions: state.draft.conditions,
+    allergies: state.draft.allergies,
+    medications: state.draft.medications
+  };
+  const name = document.getElementById("fName").value.trim();
+
+  try{
+    let patient;
+    if(state.patientId){
+      patient = await api("/api/patients/" + state.patientId, {
+        method:"PUT", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload)
+      });
+      toast("Patient record updated.");
+    }else{
+      patient = await api("/api/patients", {
+        method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload)
+      });
+      toast("Patient record created.");
+    }
+    setActivePatient(patient.id, name || state.patientName);
+  }catch(e){
+    toast(e.message, true);
+  }finally{
+    statusEl.style.display = "none";
+  }
+});
+
+/* =========================================================================
+   REPORTS
+   ========================================================================= */
+function requirePatientGate(emptyElId, bodyElId){
+  const empty = document.getElementById(emptyElId);
+  const body = document.getElementById(bodyElId);
+  if(!state.patientId){
+    empty.style.display = "block";
+    body.style.display = "none";
+    return false;
+  }
+  empty.style.display = "none";
+  body.style.display = "block";
+  return true;
+}
+
+document.getElementById("btnChooseFile").addEventListener("click", ()=>document.getElementById("fileInput").click());
+document.getElementById("fileInput").addEventListener("change", (e)=>{
+  if(e.target.files && e.target.files[0]) uploadReport(e.target.files[0]);
+});
+const uploadBox = document.getElementById("uploadBox");
+["dragover","dragenter"].forEach(evt=>uploadBox.addEventListener(evt, (e)=>{ e.preventDefault(); uploadBox.classList.add("drag"); }));
+["dragleave","drop"].forEach(evt=>uploadBox.addEventListener(evt, (e)=>{ e.preventDefault(); uploadBox.classList.remove("drag"); }));
+uploadBox.addEventListener("drop", (e)=>{
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) uploadReport(f);
+});
+
+async function uploadReport(file){
+  if(!state.patientId){ toast("Select a patient first.", true); return; }
+  if(file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")){
+    toast("Only PDF files are supported.", true); return;
+  }
+  const statusEl = document.getElementById("uploadStatus");
+  statusEl.style.display = "flex";
+  statusEl.innerHTML = "";
+  statusEl.appendChild(h("span", { class:"spinner" }));
+  statusEl.appendChild(document.createTextNode(" Uploading " + file.name + "…"));
+
+  const fd = new FormData();
+  fd.append("patient_id", state.patientId);
+  fd.append("file", file);
+
+  try{
+    const doc = await apiForm("/api/reports/upload", fd);
+    toast("Uploaded " + doc.filename + ".");
+    await loadReports();
+    await extractReport(doc.id, doc.filename);
+  }catch(e){
+    toast(e.message, true);
+  }finally{
+    statusEl.style.display = "none";
+    document.getElementById("fileInput").value = "";
+  }
+}
+
+async function extractReport(docId, filename){
+  toast("Extracting " + filename + "…");
+  try{
+    const result = await api("/api/reports/" + docId + "/extract", { method:"POST" });
+    if(result.had_selectable_text === false){
+      toast(filename + " has no selectable text (likely scanned) — no lab values could be extracted.", true);
+    }else{
+      toast("Extracted " + result.labs_created.length + " lab value(s) from " + filename + ".");
+    }
+  }catch(e){
+    toast("Extraction failed for " + filename + ": " + e.message, true);
+  }finally{
+    loadReports();
+  }
+}
+
+async function loadReports(){
+  if(!requirePatientGate("reportsNoPatient","reportsBody")) return;
+  const list = document.getElementById("docList");
+  list.innerHTML = "";
+  list.appendChild(h("div", { class:"inline-loading" }, [h("span",{class:"spinner"}), " Loading reports…"]));
+  try{
+    const record = await api("/api/patients/" + state.patientId + "/record");
+    state.record = record;
+    list.innerHTML = "";
+    if(!record.documents.length){
+      list.appendChild(h("div", { class:"state-block" }, [
+        h("h4", {}, ["No reports uploaded yet"]),
+        h("p", {}, ["Upload a PDF above to extract structured lab data."])
+      ]));
+      return;
+    }
+    record.documents.forEach(doc=>{
+      const statusBadgeClass = doc.status === "EXTRACTED" ? "badge-verified" : doc.status === "EXTRACTION_FAILED" ? "badge-rejected" : "badge-unverified";
+      const row = h("div", { class:"doc-row" }, [
+        h("div", { class:"doc-info" }, [
+          h("div", { class:"fname" }, [doc.filename]),
+          h("div", { class:"fmeta" }, [
+            "Uploaded " + fmtDateTime(doc.uploaded_at) + (doc.report_date ? " · report dated " + fmtDate(doc.report_date) : "")
+          ]),
+          doc.error_message ? h("div", { class:"fmeta", style:"color:var(--red);" }, [doc.error_message]) : null
+        ]),
+        h("div", { style:"display:flex; align-items:center; gap:10px;" }, [
+          h("span", { class:"badge " + statusBadgeClass }, [doc.status.replace("_"," ")]),
+          doc.status === "UPLOADED" ? h("button", { class:"btn btn-sm", onclick: ()=>extractReport(doc.id, doc.filename) }, ["Extract"]) : null,
+          doc.status === "EXTRACTION_FAILED" ? h("button", { class:"btn btn-sm", onclick: ()=>extractReport(doc.id, doc.filename) }, ["Retry"]) : null
+        ])
+      ]);
+      list.appendChild(row);
+    });
+  }catch(e){
+    list.innerHTML = "";
+    list.appendChild(h("div", { class:"state-block error" }, [h("h4",{},["Couldn't load reports"]), h("p",{},[e.message])]));
+  }
+}
+
+/* =========================================================================
+   FACT VERIFY / EDIT / REJECT (shared: patient_facts + lab_results)
+   ========================================================================= */
+async function verifyFact(factId, action, onDone){
+  try{
+    await api("/api/facts/" + factId + "/verify", {
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ action: action })
+    });
+    toast(action === "VERIFY" ? "Marked as verified." : "Marked as rejected.");
+    if(onDone) onDone();
+  }catch(e){
+    toast(e.message, true);
+  }
+}
+async function editFact(factId, payload, onDone){
+  try{
+    await api("/api/facts/" + factId, {
+      method:"PUT", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload)
+    });
+    toast("Fact updated and marked verified.");
+    if(onDone) onDone();
+  }catch(e){
+    toast(e.message, true);
+  }
+}
+
+function factActionGroup(fact, isLab, onDone){
+  const wrap = h("div", { class:"fact-actions" });
+  const verifyBtn = h("button", { class:"btn btn-sm", onclick: ()=>verifyFact(fact.id, "VERIFY", onDone) }, ["Verify"]);
+  const rejectBtn = h("button", { class:"btn btn-sm btn-danger", onclick: ()=>verifyFact(fact.id, "REJECT", onDone) }, ["Reject"]);
+  const editBtn = h("button", { class:"btn btn-sm", onclick: ()=>toggleEditPanel(fact.id) }, ["Edit"]);
+  wrap.appendChild(verifyBtn);
+  wrap.appendChild(editBtn);
+  wrap.appendChild(rejectBtn);
+  return wrap;
+}
+function toggleEditPanel(id){
+  const el = document.getElementById("edit-" + id);
+  if(el) el.classList.toggle("open");
+}
+
+function buildEditInline(fact, isLab, onDone){
+  const wrap = h("div", { class:"edit-inline", id:"edit-" + fact.id });
+  if(isLab){
+    const valInput = h("input", { type:"text", value: fact.value ?? "", placeholder:"Value" });
+    const unitInput = h("input", { type:"text", value: fact.unit ?? "", placeholder:"Unit" });
+    const lowInput = h("input", { type:"text", value: fact.ref_low ?? "", placeholder:"Ref low" });
+    const highInput = h("input", { type:"text", value: fact.ref_high ?? "", placeholder:"Ref high" });
+    wrap.appendChild(h("div", { class:"row" }, [valInput, unitInput, lowInput, highInput]));
+    wrap.appendChild(h("button", { class:"btn btn-sm btn-primary", onclick: ()=>{
+      editFact(fact.id, {
+        value: valInput.value ? Number(valInput.value) : null,
+        unit: unitInput.value || null,
+        ref_low: lowInput.value ? Number(lowInput.value) : null,
+        ref_high: highInput.value ? Number(highInput.value) : null
+      }, onDone);
+    }}, ["Save"]));
+  }else{
+    const valInput = h("input", { type:"text", value: fact.value ?? "", style:"width:260px;" });
+    wrap.appendChild(h("div", { class:"row" }, [valInput]));
+    wrap.appendChild(h("button", { class:"btn btn-sm btn-primary", onclick: ()=>{
+      editFact(fact.id, { value: valInput.value }, onDone);
+    }}, ["Save"]));
+  }
+  return wrap;
+}
+
+/* =========================================================================
+   STRUCTURED RECORD
+   ========================================================================= */
+async function loadRecord(){
+  if(!requirePatientGate("recordEmpty","recordBody")) return;
+  try{
+    const record = await api("/api/patients/" + state.patientId + "/record");
+    state.record = record;
+    renderRecord(record);
+  }catch(e){
+    document.getElementById("recordBody").innerHTML = "";
+    document.getElementById("recordBody").appendChild(h("div", { class:"state-block error" }, [h("h4",{},["Couldn't load record"]), h("p",{},[e.message])]));
+  }
+}
+
+function renderRecord(record){
+  const p = record.patient;
+  const panel = document.getElementById("recordPatientPanel");
+  panel.innerHTML = "";
+  panel.appendChild(h("h3", { style:"font-size:15px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:10px;" }, ["Patient"]));
+  panel.appendChild(h("div", { style:"display:flex; gap:26px; flex-wrap:wrap;" }, [
+    h("div", {}, [h("div", {class:"fact-meta", style:"margin:0;"},["Age"]), h("div",{style:"font-size:18px; font-weight:600;"},[ p.age != null ? String(p.age) : "—" ])]),
+    h("div", {}, [h("div", {class:"fact-meta", style:"margin:0;"},["Sex"]), h("div",{style:"font-size:18px; font-weight:600; text-transform:capitalize;"},[ p.sex || "—" ])]),
+    h("div", {}, [h("div", {class:"fact-meta", style:"margin:0;"},["Patient ID"]), h("div",{class:"mono", style:"font-size:13px; margin-top:6px;"},[ p.id ])])
+  ]));
+
+  const groups = { SYMPTOM: "recordSymptoms", CONDITION: "recordConditions", ALLERGY: "recordAllergies", MEDICATION: "recordMedications" };
+  Object.keys(groups).forEach(cat=>{
+    const container = document.getElementById(groups[cat]);
+    container.innerHTML = "";
+    const facts = record.patient_facts.filter(f=>f.category === cat);
+    if(!facts.length){
+      container.appendChild(h("div", { class:"state-block" }, [h("p",{},["No " + cat.toLowerCase() + "s recorded."])]));
+      return;
+    }
+    facts.forEach(f=>{
+      container.appendChild(renderFactRow(f, false));
+    });
+  });
+
+  const labMini = document.getElementById("recordLabsMini");
+  labMini.innerHTML = "";
+  if(!record.lab_results.length){
+    labMini.appendChild(h("div", { class:"state-block" }, [h("p",{},["No lab results yet — upload and extract a report."])]));
+  }else{
+    record.lab_results.forEach(l=>{
+      labMini.appendChild(h("div", { class:"fact-row origin-" + l.origin.toLowerCase() }, [
+        h("div", { class:"fact-main" }, [
+          h("div", { class:"fact-value" }, [l.test_name + ": " + (l.raw_value ?? "—") + " " + (l.unit || "")]),
+          h("div", { class:"fact-meta" }, [
+            classificationBadge(l.classification),
+            h("span",{class:"mono", style:"font-size:12px; color:var(--muted);"},[ "ref " + (l.ref_raw || "n/a") ]),
+            originDot(l.origin)
+          ])
+        ])
+      ]));
+    });
+  }
+
+  const docs = document.getElementById("recordDocs");
+  docs.innerHTML = "";
+  if(!record.documents.length){
+    docs.appendChild(h("div", { class:"state-block" }, [h("p",{},["No reports uploaded."])]));
+  }else{
+    record.documents.forEach(doc=>{
+      docs.appendChild(h("div", { class:"doc-row" }, [
+        h("div", { class:"doc-info" }, [
+          h("div", { class:"fname" }, [doc.filename]),
+          h("div", { class:"fmeta" }, ["Status: " + doc.status.replace("_"," ")])
+        ])
+      ]));
+    });
+  }
+}
+
+function renderFactRow(fact, isLab){
+  const row = h("div", { class:"fact-row origin-" + fact.origin.toLowerCase() });
+  const main = h("div", { class:"fact-main" }, [
+    h("div", { class:"fact-value" + (fact.verification_state === "REJECTED" ? " rejected" : "") }, [fact.value]),
+    h("div", { class:"fact-meta" }, [
+      originDot(fact.origin),
+      verificationBadge(fact.verification_state),
+      fact.source_text ? h("span", { class:"mono", style:"font-size:11.5px; color:var(--muted-2);" }, ["from report"]) : null
+    ])
+  ]);
+  row.appendChild(main);
+  row.appendChild(factActionGroup(fact, isLab, loadRecord));
+  row.appendChild(buildEditInline(fact, isLab, loadRecord));
+  return row;
+}
+
+/* =========================================================================
+   LAB INTELLIGENCE
+   ========================================================================= */
+async function loadLabs(){
+  if(!requirePatientGate("labsEmpty","labsBody")) return;
+  const tbody = document.getElementById("labsTableBody");
+  tbody.innerHTML = "";
+  tbody.appendChild(h("tr",{},[h("td",{colspan:"8"},[h("div",{class:"inline-loading"},[h("span",{class:"spinner"})," Loading lab results…"])])]));
+  try{
+    const labs = await api("/api/patients/" + state.patientId + "/labs");
+    state.labs = labs;
+    renderLabsTable(labs);
+  }catch(e){
+    tbody.innerHTML = "";
+    tbody.appendChild(h("tr",{},[h("td",{colspan:"8"},[h("div",{class:"state-block error"},[h("h4",{},["Couldn't load labs"]), h("p",{},[e.message])])])]));
+  }
+}
+
+function renderLabsTable(labs){
+  const tbody = document.getElementById("labsTableBody");
+  tbody.innerHTML = "";
+  document.getElementById("labsEditArea").innerHTML = "";
+  if(!labs.length){
+    tbody.appendChild(h("tr",{},[h("td",{colspan:"8"},[h("div",{class:"state-block"},[h("h4",{},["No lab results yet"]),h("p",{},["Upload and extract a report to populate this table."])])])]));
+    return;
+  }
+  labs.forEach(l=>{
+    const tr = h("tr", {}, [
+      h("td", {}, [l.test_name]),
+      h("td", { class:"num" }, [l.raw_value ?? "—"]),
+      h("td", {}, [l.unit || "—"]),
+      h("td", { class:"num" }, [l.ref_raw || "not provided"]),
+      h("td", {}, [classificationBadge(l.classification)]),
+      h("td", { class:"mono" }, [fmtDate(l.report_date)]),
+      h("td", {}, [verificationBadge(l.verification_state)]),
+      h("td", {}, [h("button", { class:"row-link", onclick: ()=>jumpToEvidence(l.id) }, ["Why?"])])
+    ]);
+    tbody.appendChild(tr);
+    const editRow = h("tr", { id:"labrow-edit-" + l.id }, [h("td", { colspan:"8" }, [
+      h("div", { style:"display:flex; gap:8px; margin:6px 0;" }, [
+        h("button", { class:"btn btn-sm", onclick: ()=>verifyFact(l.id, "VERIFY", loadLabs) }, ["Verify"]),
+        h("button", { class:"btn btn-sm", onclick: ()=>toggleEditPanel(l.id) }, ["Edit"]),
+        h("button", { class:"btn btn-sm btn-danger", onclick: ()=>verifyFact(l.id, "REJECT", loadLabs) }, ["Reject"])
+      ]),
+      buildEditInline(l, true, loadLabs)
+    ])]);
+    tbody.appendChild(editRow);
+  });
+}
+
+function jumpToEvidence(subjectId){
+  state.focusSubjectId = subjectId;
+  showView("evidence");
+}
+
+/* =========================================================================
+   EVIDENCE
+   ========================================================================= */
+async function loadEvidence(){
+  if(!requirePatientGate("evidenceEmpty","evidenceBody")) return;
+  const list = document.getElementById("evidenceList");
+  list.innerHTML = "";
+  list.appendChild(h("div", { class:"inline-loading" }, [h("span",{class:"spinner"})," Loading evidence…"]));
+  try{
+    const evidence = await api("/api/patients/" + state.patientId + "/evidence");
+    state.evidence = evidence;
+    renderEvidence(evidence);
+  }catch(e){
+    list.innerHTML = "";
+    list.appendChild(h("div", { class:"state-block error" }, [h("h4",{},["Couldn't load evidence"]), h("p",{},[e.message])]));
+  }
+}
+
+function renderEvidence(evidence){
+  const list = document.getElementById("evidenceList");
+  list.innerHTML = "";
+  if(!evidence.length){
+    list.appendChild(h("div", { class:"state-block" }, [h("h4",{},["No evidence yet"]), h("p",{},["Evidence appears once a report has been extracted or a fact recorded."])]));
+    return;
+  }
+  let ordered = evidence;
+  if(state.focusSubjectId){
+    ordered = evidence.slice().sort((a,b)=>{
+      if(a.subject_id === state.focusSubjectId) return -1;
+      if(b.subject_id === state.focusSubjectId) return 1;
+      return 0;
+    });
+  }
+  ordered.forEach(ev=>{
+    const isFocused = ev.subject_id === state.focusSubjectId;
+    const card = h("div", { class:"ev-card", style: isFocused ? "border-color:var(--teal); box-shadow:0 0 0 1px var(--teal);" : "" }, [
+      h("div", { style:"display:flex; justify-content:space-between; align-items:flex-start; gap:12px;" }, [
+        h("div", {}, [
+          h("div", { style:"font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted-2);" }, [ev.subject_type.replace("_"," ")]),
+          h("div", { style:"font-size:12px; font-family:var(--mono); color:var(--muted); margin-top:2px;" }, [ev.subject_id])
+        ]),
+        originDot(ev.origin)
+      ]),
+      ev.source_text ? h("div", { class:"ev-source" }, ["“" + ev.source_text + "”"]) : h("p", {class:"muted", style:"margin-top:10px; font-size:13px;"},["No source text captured for this fact."]),
+      h("div", { class:"ev-meta-grid" }, [
+        h("div", {}, [h("div",{class:"k"},["Source document"]), h("div",{class:"v"},[ev.document_id || "—"])]),
+        h("div", {}, [h("div",{class:"k"},["Page"]), h("div",{class:"v"},[ev.page_number != null ? String(ev.page_number) : "—"])]),
+        h("div", {}, [h("div",{class:"k"},["Confidence"]), h("div",{class:"v"},[ev.confidence != null ? Math.round(ev.confidence*100) + "%" : "—"])]),
+        h("div", {}, [h("div",{class:"k"},["Method"]), h("div",{class:"v", style:"font-weight:400;"},[ev.method || "—"])])
+      ])
+    ]);
+    list.appendChild(card);
+  });
+  state.focusSubjectId = null;
+}
+
+/* =========================================================================
+   CONFLICTS
+   ========================================================================= */
+async function loadConflicts(){
+  if(!requirePatientGate("conflictsEmpty","conflictsBody")) return;
+  const list = document.getElementById("conflictsList");
+  list.innerHTML = "";
+  list.appendChild(h("div", { class:"inline-loading" }, [h("span",{class:"spinner"})," Scanning for conflicts…"]));
+  try{
+    const conflicts = await api("/api/patients/" + state.patientId + "/conflicts");
+    state.conflicts = conflicts;
+    renderConflicts(conflicts);
+  }catch(e){
+    list.innerHTML = "";
+    list.appendChild(h("div", { class:"state-block error" }, [h("h4",{},["Couldn't load conflicts"]), h("p",{},[e.message])]));
+  }
+}
+
+function renderConflicts(conflicts){
+  const list = document.getElementById("conflictsList");
+  list.innerHTML = "";
+  if(!conflicts.length){
+    list.appendChild(h("div", { class:"state-block" }, [h("h4",{},["No conflicts detected"]), h("p",{},["Current and previous information agree so far."])]));
+    return;
+  }
+  conflicts.forEach(c=>{
+    const resolved = c.status !== "REQUIRES_HUMAN_VERIFICATION";
+    const card = h("div", { class:"conflict-card" }, [
+      h("div", { style:"display:flex; justify-content:space-between; align-items:center;" }, [
+        h("div", {}, [
+          h("div", { style:"font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted-2);" }, [c.category]),
+          h("h4", { style:"font-size:16px; margin-top:2px;" }, [c.field_label])
+        ]),
+        h("span", { class:"badge badge-conflict" }, [resolved ? c.status.replace(/_/g," ") : "Requires human verification"])
+      ]),
+      h("div", { class:"conflict-compare" }, [
+        h("div", { class:"conflict-side current" }, [h("div",{class:"k"},["Current"]), h("div",{class:"v"},[c.current_value])]),
+        h("div", { class:"conflict-vs" }, ["vs"]),
+        h("div", { class:"conflict-side previous" }, [h("div",{class:"k"},["Previous"]), h("div",{class:"v"},[c.previous_value])])
+      ]),
+      h("div", { style:"display:flex; gap:8px; flex-wrap:wrap;" }, [
+        c.current_fact_id ? h("button", { class:"btn btn-sm", onclick: ()=>verifyFact(c.current_fact_id, "VERIFY", loadConflicts) }, ["Verify current"]) : null,
+        c.current_fact_id ? h("button", { class:"btn btn-sm btn-danger", onclick: ()=>verifyFact(c.current_fact_id, "REJECT", loadConflicts) }, ["Reject current"]) : null,
+        c.previous_fact_id ? h("button", { class:"btn btn-sm", onclick: ()=>verifyFact(c.previous_fact_id, "VERIFY", loadConflicts) }, ["Verify previous"]) : null,
+        c.previous_fact_id ? h("button", { class:"btn btn-sm btn-danger", onclick: ()=>verifyFact(c.previous_fact_id, "REJECT", loadConflicts) }, ["Reject previous"]) : null
+      ])
+    ]);
+    list.appendChild(card);
+  });
+}
+
+/* =========================================================================
+   TIMELINE
+   ========================================================================= */
+async function loadTimeline(){
+  if(!requirePatientGate("timelineEmpty","timelineBody")) return;
+  const list = document.getElementById("timelineList");
+  list.innerHTML = "";
+  list.appendChild(h("div", { class:"inline-loading" }, [h("span",{class:"spinner"})," Loading timeline…"]));
+  try{
+    const timeline = await api("/api/patients/" + state.patientId + "/timeline");
+    state.timeline = timeline;
+    renderTimeline(timeline);
+  }catch(e){
+    list.innerHTML = "";
+    list.appendChild(h("div", { class:"state-block error" }, [h("h4",{},["Couldn't load timeline"]), h("p",{},[e.message])]));
+  }
+}
+
+function renderTimeline(timeline){
+  const list = document.getElementById("timelineList");
+  list.innerHTML = "";
+  if(!timeline.length){
+    list.appendChild(h("div", { class:"state-block" }, [h("h4",{},["No history yet"]), h("p",{},["Timeline events appear as intake, reports, and verification actions happen."])]));
+    return;
+  }
+  timeline.forEach(ev=>{
+    let detailLine = "";
+    if(ev.detail && typeof ev.detail === "object"){
+      if(ev.detail.numeric_change != null) detailLine = "Change: " + (ev.detail.numeric_change > 0 ? "+" : "") + ev.detail.numeric_change;
+      else if(ev.detail.classification) detailLine = "Classification: " + ev.detail.classification;
+      else if(ev.detail.previous && ev.detail.current) detailLine = ev.detail.previous + " → " + ev.detail.current;
+    }
+    list.appendChild(h("div", { class:"tl-event type-" + ev.event_type.toLowerCase() }, [
+      h("div", { class:"tl-date" }, [fmtDate(ev.event_date)]),
+      h("div", { class:"tl-title" }, [ev.title]),
+      detailLine ? h("div", { class:"tl-detail" }, [detailLine]) : null
+    ]));
+  });
+}
+
+/* =========================================================================
+   AI SUMMARY
+   ========================================================================= */
+function loadSummaryView(){
+  requirePatientGate("summaryEmpty","summaryBody");
+}
+document.getElementById("btnGenSummary").addEventListener("click", async ()=>{
+  if(!state.patientId){ toast("Select a patient first.", true); return; }
+  const box = document.getElementById("summaryBox");
+  box.innerHTML = "";
+  box.appendChild(h("div", { class:"inline-loading" }, [h("span",{class:"spinner"})," Generating summary from the structured record…"]));
+  try{
+    const summary = await api("/api/patients/" + state.patientId + "/summary", { method:"POST" });
+    box.innerHTML = "";
+    box.appendChild(h("div", { style:"font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color:var(--teal-deep); font-weight:600;" }, [summary.label || "AI-generated summary"]));
+    box.appendChild(h("div", { class:"summary-text", style:"margin-top:10px;" }, [summary.text]));
+    box.appendChild(h("div", { class:"disclaimer" }, ["MedLens organizes and summarizes clinical information for review. It does not provide a diagnosis or treatment recommendation."]));
+    box.appendChild(h("div", { class:"summary-meta" }, ["Generated by " + summary.generated_by + " · " + fmtDateTime(summary.created_at)]));
+  }catch(e){
+    box.innerHTML = "";
+    box.appendChild(h("div", { class:"state-block error" }, [h("h4",{},["Couldn't generate summary"]), h("p",{},[e.message])]));
+  }
+});
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+renderPatientChip();
+showView("dashboard");
+
+})();
+</script>
+</body>
+</html>

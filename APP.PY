@@ -55,11 +55,39 @@ except Exception:  # pragma: no cover
 # ---------------------------------------------------------------------------
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# frontend/ is a sibling of backend/ per the project layout:
-#   MedLens/backend/app.py, MedLens/frontend/index.html
-FRONTEND_DIR = os.environ.get(
-    "MEDLENS_FRONTEND_DIR", os.path.join(os.path.dirname(BASE_DIR), "frontend")
-)
+
+
+def _detect_frontend_dir():
+    """Find index.html no matter which of the two common layouts is used,
+    so this works right after a fresh `git clone` with zero manual setup —
+    no env var, no folder rearranging required.
+
+    Checked in order:
+      1. MEDLENS_FRONTEND_DIR env var, if explicitly set (highest priority,
+         still supported for unusual/custom layouts).
+      2. Sibling "frontend/" folder next to this file's folder, e.g.
+         MedLens/backend/app.py + MedLens/frontend/index.html
+      3. The same folder this file lives in (flat layout), e.g.
+         MED/app.py + MED/index.html
+    Falls back to the sibling-folder path (option 2) if index.html isn't
+    found anywhere, so the JSON fallback message in root() still reports
+    a sensible, explainable location.
+    """
+    env_override = os.environ.get("MEDLENS_FRONTEND_DIR")
+    if env_override:
+        return env_override
+
+    sibling_frontend = os.path.join(os.path.dirname(BASE_DIR), "frontend")
+    if os.path.isfile(os.path.join(sibling_frontend, "index.html")):
+        return sibling_frontend
+
+    if os.path.isfile(os.path.join(BASE_DIR, "index.html")):
+        return BASE_DIR
+
+    return sibling_frontend  # not found anywhere; used for the error message
+
+
+FRONTEND_DIR = _detect_frontend_dir()
 DB_PATH = os.environ.get("MEDLENS_DB_PATH", os.path.join(BASE_DIR, "medlens.db"))
 UPLOAD_DIR = os.environ.get("MEDLENS_UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))
 MAX_UPLOAD_BYTES = int(os.environ.get("MEDLENS_MAX_UPLOAD_MB", "15")) * 1024 * 1024
